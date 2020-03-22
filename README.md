@@ -1,3 +1,18 @@
+Changes in this fork
+====
+
+## 1. Training: 
+Use run-project.sh with sbatch or the following command:
+
+```
+python food_v2.py train --dataset=Food --weights=coco --logs=logs1
+```
+
+Where **--dataset** is your folder with train and val subdirs, **--weights** are your initial weights, **--logs** is where you want to save your weights and tensorboard events.
+
+## 2. Inference:
+Use demo_food.ipynb do inference on the food dataset as a demo.
+
 # Mask R-CNN for Food Detection and Segmentation
 
 #### Gulab Jamun
