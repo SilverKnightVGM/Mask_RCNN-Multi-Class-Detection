@@ -215,6 +215,39 @@ def train(model):
                 epochs=30,
                 layers='heads')
 
+def evaluate(model):
+    dataset_test = FoodDataset()
+    dataset_test.load_food(args.dataset, "val")
+    dataset_test.prepare()
+    all_APs = []
+    # print(dataset_test.image_ids)
+    np.random.shuffle(dataset_test.image_ids)
+    # iou_t = 0.5
+    ious = [0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95]
+    for iou_t in ious:
+        APs = []
+        for image_id in dataset_test.image_ids:
+            # Load image and ground truth data
+            image, image_meta, gt_class_id, gt_bbox, gt_mask =\
+                modellib.load_image_gt(dataset_test, config,
+                                       image_id, use_mini_mask=False)
+            molded_images = np.expand_dims(modellib.mold_image(image, config), 0)
+            # Run object detection
+            results = model.detect([image], verbose=0)
+            r = results[0]
+            if r["class_ids"].size != 0:
+                # Compute AP
+                AP, precisions, recalls, overlaps =\
+                    utils.compute_ap(gt_bbox, gt_class_id, gt_mask,
+                                     r["rois"], r["class_ids"], r["scores"], r['masks'], iou_threshold=iou_t)
+                APs.append(AP)
+                all_APs.append(AP)
+                # print(AP)
+            else:
+                APs.append(0.0)
+                all_APs.append(0.0)
+        print("mAP-{}: ".format(iou_t), np.mean(APs) * 100, "%")
+    print("mAP: ", np.mean(all_APs) * 100, "%")
 
 def color_splash(image, mask):
     """Apply color splash effect.
@@ -382,6 +415,9 @@ if __name__ == '__main__':
     elif args.command == "splash":
         detect_and_color_splash(model, image_path=args.image,
                                 video_path=args.video)
+    elif args.command == "evaluate":
+        evaluate(model)
+        
     else:
         print("'{}' is not recognized. "
               "Use 'train' or 'splash'".format(args.command))
